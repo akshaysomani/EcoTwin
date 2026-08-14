@@ -78,4 +78,3 @@ npm run build
 * **Secrets Protection**: Avoid placing server-side tokens (like `SUPABASE_SERVICE_ROLE_KEY` or MQTT database passwords) in client repositories.
 * **Database Row Level Security (RLS)**: Row level security rules on `ecotwin_sensor_readings` must be reviewed and verified directly in the Supabase management console.
 * **Encryption**: HTTPS must be configured and enforced on the hosting platform (Vercel, Netlify, or AWS).
-
