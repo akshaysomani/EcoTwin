@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import { Activity } from "lucide-react";
 
-export default function EnergyTrendChart({ data = [], available = false }) {
+export default function EnergyTrendChart({ data = [], available = false, mode = "VALIDATED", energyWh = 0.0617, runtimeMinutes = 10 }) {
   if (!available || data.length === 0) {
     return (
       <div className="panel energy-trend-chart-panel border-dashed">
@@ -21,9 +21,33 @@ export default function EnergyTrendChart({ data = [], available = false }) {
             <p>Chronological power loading vs. integrated Wh metrics</p>
           </div>
         </div>
-        <div className="chart-empty-state">
+        <div className="chart-empty-state" style={{ padding: '30px 20px' }}>
           <Activity size={32} className="text-warning" />
-          <p>Energy history unavailable. No valid electrical telemetry found in current range.</p>
+          <p style={{ fontWeight: 'bold', fontSize: '15px', marginTop: '10px' }}>Validated electrical telemetry unavailable.</p>
+          
+          {mode === "ESTIMATED" && (
+            <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#1e293b', borderRadius: '6px', maxWidth: '400px', margin: '20px auto 0 auto', textAlign: 'left', border: '1px solid #334155' }}>
+              <span className="lbl" style={{ display: 'block', color: '#f59e0b', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px' }}>
+                Energy Estimation Summary
+              </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>Estimated Power:</span>
+                <strong style={{ fontSize: '12px', color: '#fff' }}>0.37 W</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>Estimated Energy:</span>
+                <strong style={{ fontSize: '12px', color: '#fff' }}>{Number(energyWh).toFixed(4)} Wh</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>Runtime:</span>
+                <strong style={{ fontSize: '12px', color: '#fff' }}>{runtimeMinutes} min</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>Status:</span>
+                <span className="trend-badge-pill trend-volatile" style={{ fontSize: '9px', padding: '1px 4px' }}>ESTIMATED</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

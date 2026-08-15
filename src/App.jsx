@@ -15,6 +15,7 @@ import { alertService } from "./services/alertService";
 
 // Phase 7 Energy Engine Import
 import { energyEngine } from "./utils/energyEngine";
+import { ESTIMATION_CONFIG, calculateEstimatedEnergy } from "./utils/energyEstimate";
 
 // Phase 8 Maintenance Engine Import
 import { maintenanceEngine } from "./utils/maintenanceEngine";
@@ -98,6 +99,9 @@ function App() {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [deviceOnline, setDeviceOnline] = useState(false);
   const [rangeLimit, setRangeLimit] = useState(30);
+
+  // Phase 14 Energy Estimation Config State
+  const [estimationConfig, setEstimationConfig] = useState(ESTIMATION_CONFIG);
 
   // Phase 13 Tab routing state
   const [currentTab, setCurrentTab] = useState(() => {
@@ -215,8 +219,41 @@ function App() {
   }, [slicedReadings, deviceOnline]);
 
   const energyAssessment = useMemo(() => {
-    return energyEngine.calculateEnergyAssessment(slicedReadings);
-  }, [slicedReadings]);
+    const rawAssessment = energyEngine.calculateEnergyAssessment(slicedReadings);
+
+    if (!rawAssessment.available && estimationConfig.enabled) {
+      const estimate = calculateEstimatedEnergy({
+        nominalVoltageV: estimationConfig.nominalVoltageV,
+        observedCurrentMa: estimationConfig.observedCurrentMa,
+        runtimeMinutes: estimationConfig.runtimeMinutes
+      });
+
+      return {
+        ...rawAssessment,
+        mode: "ESTIMATED",
+        available: false,
+        estimatedAvailable: true,
+        avgVoltage: estimate.nominalVoltageV,
+        avgCurrent: estimate.observedCurrentMa,
+        avgPower: estimate.powerW,
+        maxPower: estimate.powerW,
+        energyWh: estimate.energyWh,
+        energyKwh: estimate.energyKwh,
+        runtimeMinutes: estimate.runtimeMinutes,
+        trend: "STABLE",
+        insights: [
+          "Electrical telemetry is currently not validated. The displayed energy value is an engineering estimate based on nominal 5 V motor voltage and observed INA219 current."
+        ]
+      };
+    } else {
+      return {
+        ...rawAssessment,
+        mode: rawAssessment.available ? "VALIDATED" : "UNAVAILABLE",
+        estimatedAvailable: false,
+        runtimeMinutes: null
+      };
+    }
+  }, [slicedReadings, estimationConfig]);
 
   const healthAssessment = useMemo(() => {
     return calculateEquipmentHealthAssessment(slicedReadings, energyAssessment, predictiveData);
@@ -580,12 +617,26 @@ function App() {
                   <strong className="val">{latest ? latest.temperature_c + " °C" : "UNAVAILABLE"}</strong>
                 </div>
                 <div className="kpi-card">
-                  <span className="lbl">Current Power</span>
-                  <strong className="val">{currentPowerW}</strong>
+                  <span className="lbl">{energyAssessment.mode === "ESTIMATED" ? "Estimated Power" : "Current Power"}</span>
+                  <strong className="val">
+                    {energyAssessment.mode === "ESTIMATED" ? `${energyAssessment.avgPower.toFixed(2)} W` : currentPowerW}
+                  </strong>
+                  {energyAssessment.mode === "ESTIMATED" && (
+                    <span className="trend-badge-pill trend-volatile" style={{ fontSize: '9px', display: 'inline-block', marginTop: '4px' }}>
+                      ESTIMATED
+                    </span>
+                  )}
                 </div>
                 <div className="kpi-card">
-                  <span className="lbl">Energy</span>
-                  <strong className="val">{accumulatedEnergy}</strong>
+                  <span className="lbl">{energyAssessment.mode === "ESTIMATED" ? "Estimated Energy" : "Energy"}</span>
+                  <strong className="val">
+                    {energyAssessment.mode === "ESTIMATED" ? `${energyAssessment.energyWh.toFixed(4)} Wh` : accumulatedEnergy}
+                  </strong>
+                  {energyAssessment.mode === "ESTIMATED" && (
+                    <span className="trend-badge-pill trend-volatile" style={{ fontSize: '9px', display: 'inline-block', marginTop: '4px' }}>
+                      ESTIMATED
+                    </span>
+                  )}
                 </div>
                 <div className="kpi-card">
                   <span className="lbl">Active Alerts</span>
@@ -809,18 +860,127 @@ function App() {
                 <ElectricalQualityCard
                   quality={energyAssessment.quality}
                   latestReading={latest}
+                  estimationConfig={estimationConfig}
                 />
+              </section>
+
+              {/* Energy Fallback settings configuration panel */}
+              <section className="mt-6 no-print">
+                <div className="panel estimation-config-card">
+                  <div className="panel-header border-b">
+                    <div>
+                      <h2>ENERGY FALLBACK SETTINGS</h2>
+                      <p>Configure engineering estimation parameters when electrical telemetry is unverified</p>
+                    </div>
+                  </div>
+                  <div className="panel-body mt-4">
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="lbl" style={{ margin: 0, fontWeight: 'bold' }}>Estimation Mode:</span>
+                        <button
+                          className={`shortcut-btn ${estimationConfig.enabled ? 'active' : ''}`}
+                          style={{
+                            margin: 0,
+                            padding: '6px 12px',
+                            backgroundColor: estimationConfig.enabled ? '#10b981' : '#475569',
+                            color: '#fff',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            border: 'none',
+                            fontSize: '11px',
+                            fontWeight: '700'
+                          }}
+                          onClick={() => setEstimationConfig(prev => ({ ...prev, enabled: !prev.enabled }))}
+                        >
+                          {estimationConfig.enabled ? "ENABLED" : "DISABLED"}
+                        </button>
+                      </div>
+
+                      {estimationConfig.enabled && (
+                        <>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className="lbl" style={{ margin: 0 }}>Nominal Voltage:</span>
+                            <strong style={{ fontSize: '14px' }}>{estimationConfig.nominalVoltageV} V</strong>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className="lbl" style={{ margin: 0 }}>Observed Current:</span>
+                            <strong style={{ fontSize: '14px' }}>{estimationConfig.observedCurrentMa} mA</strong>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className="lbl" style={{ margin: 0 }}>Runtime Horizon:</span>
+                            <div className="range-buttons" style={{ margin: 0 }}>
+                              <button
+                                className={estimationConfig.runtimeMinutes === 10 ? "active" : ""}
+                                style={{ padding: '4px 8px', fontSize: '11px' }}
+                                onClick={() => setEstimationConfig(prev => ({ ...prev, runtimeMinutes: 10 }))}
+                              >
+                                10 min
+                              </button>
+                              <button
+                                className={estimationConfig.runtimeMinutes === 30 ? "active" : ""}
+                                style={{ padding: '4px 8px', fontSize: '11px' }}
+                                onClick={() => setEstimationConfig(prev => ({ ...prev, runtimeMinutes: 30 }))}
+                              >
+                                30 min
+                              </button>
+                              <button
+                                className={estimationConfig.runtimeMinutes === 60 ? "active" : ""}
+                                style={{ padding: '4px 8px', fontSize: '11px' }}
+                                onClick={() => setEstimationConfig(prev => ({ ...prev, runtimeMinutes: 60 }))}
+                              >
+                                60 min
+                              </button>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className="lbl" style={{ margin: 0 }}>Custom Runtime:</span>
+                            <input
+                              type="number"
+                              min="1"
+                              value={estimationConfig.runtimeMinutes}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value) || 1;
+                                setEstimationConfig(prev => ({ ...prev, runtimeMinutes: val }));
+                              }}
+                              style={{
+                                width: '70px',
+                                padding: '4px 8px',
+                                backgroundColor: '#1e293b',
+                                border: '1px solid #475569',
+                                borderRadius: '4px',
+                                color: '#fff',
+                                fontSize: '12px'
+                              }}
+                            />
+                            <span style={{ fontSize: '11px', color: '#94a3b8' }}>min</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </section>
 
               <section className="predictive-chart-section mt-6">
                 <EnergyTrendChart
                   data={energyChartPoints}
                   available={energyAssessment.available}
+                  mode={energyAssessment.mode}
+                  energyWh={energyAssessment.energyWh}
+                  runtimeMinutes={energyAssessment.runtimeMinutes}
                 />
               </section>
 
               <section className="predictive-chart-section mt-6">
-                <EnergyInsightPanel insights={energyAssessment.insights} />
+                <EnergyInsightPanel
+                  insights={energyAssessment.insights}
+                  mode={energyAssessment.mode}
+                  runtimeMinutes={energyAssessment.runtimeMinutes}
+                  energyWh={energyAssessment.energyWh}
+                />
               </section>
 
               {trendData.elec.status === "AVAILABLE" ? (

@@ -76,17 +76,28 @@ export default function SustainabilityOverviewCard({ assessment }) {
         <div className="sustainability-item">
           <span className="lbl">Energy Consumption</span>
           <strong className="val">{formatNum(energy.totalWh, 4)} Wh</strong>
-          <span className="source-tag calculated">CALCULATED FROM TELEMETRY</span>
+          {energy.mode === "ESTIMATED" ? (
+            <span className="source-tag calculated" style={{ backgroundColor: "#f59e0b", color: "#0f172a", fontWeight: "700" }}>
+              ESTIMATED — NOT FOR VERIFIED ESG REPORTING
+            </span>
+          ) : (
+            <span className="source-tag calculated">CALCULATED FROM TELEMETRY</span>
+          )}
         </div>
 
         <div className="sustainability-item">
           <span className="lbl">Carbon Footprint</span>
-          {carbon.emissions !== null ? (
+          {energy.mode === "ESTIMATED" ? (
+            <>
+              <strong className="val text-neutral">UNAVAILABLE</strong>
+              <span className="source-tag calculated" style={{ backgroundColor: "#ef4444" }}>UNVERIFIED ESTIMATE</span>
+            </>
+          ) : carbon.emissions !== null ? (
             <strong className="val text-critical">{formatNum(carbon.emissions, 6)} kgCO₂e</strong>
           ) : (
             <strong className="val text-neutral">NOT CONFIGURED</strong>
           )}
-          <span className="source-tag calculated">CALCULATED</span>
+          {energy.mode !== "ESTIMATED" && <span className="source-tag calculated">CALCULATED</span>}
         </div>
 
         <div className="sustainability-item">

@@ -53,7 +53,8 @@ export const reportEngine = {
       trend: energyAssessment.trend,
       stability: energyAssessment.powerStability,
       coverage: energyAssessment.quality.coverage,
-      status: energyAssessment.available ? "AVAILABLE" : "UNAVAILABLE"
+      status: energyAssessment.mode === "ESTIMATED" ? "ESTIMATED" : (energyAssessment.available ? "AVAILABLE" : "UNAVAILABLE"),
+      mode: energyAssessment.mode || "UNAVAILABLE"
     } : {
       totalWh: 0,
       totalKwh: 0,
@@ -62,7 +63,8 @@ export const reportEngine = {
       trend: "UNAVAILABLE",
       stability: null,
       coverage: 0,
-      status: "UNAVAILABLE"
+      status: "UNAVAILABLE",
+      mode: "UNAVAILABLE"
     };
 
     // 5. Electrical Section
@@ -168,6 +170,9 @@ export const reportEngine = {
     }
     if (sustainability.efficiencyStatus === "NOT AVAILABLE") {
       limitations.push("Energy efficiency and operational intensity calculations are disabled because no production-output denominator exists.");
+    }
+    if (energyAssessment && energyAssessment.mode === "ESTIMATED") {
+      limitations.push("Energy metrics are estimated (nominal 5 V supply, average 74 mA current, " + (energyAssessment.runtimeMinutes || 10) + " min runtime). Not independently verified.");
     }
 
     return {

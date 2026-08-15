@@ -39,7 +39,8 @@ export function buildCopilotContext({
       trend: energyAssessment.trend,
       stability: energyAssessment.powerStability,
       coverage: energyAssessment.quality.coverage,
-      available: energyAssessment.available
+      available: energyAssessment.available,
+      mode: energyAssessment.mode
     } : null,
     health: healthAssessment ? {
       status: healthAssessment.status,

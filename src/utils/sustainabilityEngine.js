@@ -55,7 +55,9 @@ export const sustainabilityEngine = {
 
     // 5. Categorical status
     let status = "UNAVAILABLE";
-    if (energyAssessment && energyAssessment.available) {
+    if (energyAssessment && energyAssessment.mode === "ESTIMATED") {
+      status = "ESTIMATED";
+    } else if (energyAssessment && energyAssessment.available) {
       if (healthAssessment && healthAssessment.status === "CRITICAL") {
         status = "MONITOR";
       } else if (coverage >= 80) {
@@ -67,7 +69,15 @@ export const sustainabilityEngine = {
 
     // 6. Rule-Based Insights
     const insights = [];
-    if (energyAssessment && energyAssessment.available) {
+    if (energyAssessment && energyAssessment.mode === "ESTIMATED") {
+      insights.push({
+        severity: "WARNING",
+        title: "Energy Mode: ESTIMATED",
+        message: "Environmental metrics use estimated energy calculations. Not for verified ESG reporting.",
+        evidence: `Estimated draw: ${energyAssessment.energyWh.toFixed(4)} Wh`,
+        source: "ESTIMATED"
+      });
+    } else if (energyAssessment && energyAssessment.available) {
       insights.push({
         severity: "INFO",
         title: "Energy Telemetry Available",
@@ -135,7 +145,8 @@ export const sustainabilityEngine = {
         maxPower: energyAssessment ? energyAssessment.maxPower : null,
         stability: energyAssessment ? energyAssessment.powerStability : null,
         trend,
-        coverage
+        coverage,
+        mode: energyAssessment ? energyAssessment.mode : "UNAVAILABLE"
       },
       efficiency,
       intensity,

@@ -1,6 +1,6 @@
 import { Shield, ShieldAlert, ShieldCheck } from "lucide-react";
 
-export default function ElectricalQualityCard({ quality, latestReading }) {
+export default function ElectricalQualityCard({ quality, latestReading, estimationConfig }) {
   const { totalRecords, validRecords, invalidRecords, coverage, state } = quality;
 
   const isHardwareOk = latestReading?.sensor_ina219_ok !== false;
@@ -53,6 +53,18 @@ export default function ElectricalQualityCard({ quality, latestReading }) {
           <div className="info-col">
             <span className="lbl">Quality Index</span>
             <div className="badge-row">{getQualityBadge(state)}</div>
+          </div>
+
+          <div className="info-col">
+            <span className="lbl">Energy Estimation</span>
+            <span className="val font-semibold">{estimationConfig?.enabled ? "Enabled" : "Disabled"}</span>
+          </div>
+
+          <div className="info-col">
+            <span className="lbl">Estimation Status</span>
+            <span className={`val font-bold ${estimationConfig?.enabled && validRecords === 0 ? "text-warning" : "text-neutral"}`}>
+              {estimationConfig?.enabled && validRecords === 0 ? "ESTIMATED" : "UNAVAILABLE"}
+            </span>
           </div>
         </div>
       </div>

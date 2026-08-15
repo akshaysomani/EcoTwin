@@ -110,6 +110,29 @@ export const copilotEngine = {
   },
 
   handleEnergy(ctx) {
+    if (ctx.energy && ctx.energy.mode === "ESTIMATED") {
+      const totalWh = ctx.energy.totalWh || 0.0617;
+      const totalKwh = ctx.energy.totalKwh || 0.0000617;
+      const avgPower = ctx.energy.avgPower || 0.37;
+      const answer = `Validated electrical telemetry is currently unavailable. The displayed energy value is an engineering estimate of approximately ${totalWh.toFixed(4)} Wh (${totalKwh.toFixed(7)} kWh) for the configured runtime, based on a nominal 5 V supply and observed current of approximately 74 mA (estimated power: ${avgPower.toFixed(2)} W).`;
+      return {
+        intent: "ENERGY",
+        answer,
+        evidence: [
+          { source: "ENERGY ESTIMATOR", metric: "Estimated Energy Wh", value: totalWh.toFixed(4), unit: "Wh", interpretation: "Engineering estimate based on configured runtime." },
+          { source: "ENERGY ESTIMATOR", metric: "Estimated Power", value: avgPower.toFixed(2), unit: "W", interpretation: "Nominal 5 V * observed 74 mA current." },
+          { source: "ENERGY ESTIMATOR", metric: "Validation Status", value: "UNVERIFIED", unit: "", interpretation: "Physical voltage readings are unverified." }
+        ],
+        recommendations: [
+          "Verify the physical motor supply voltage with a multimeter to enable validated measurement mode.",
+          "Check if the INA219 sensor is operating normally."
+        ],
+        confidence: "MEDIUM",
+        dataAvailability: "ESTIMATED",
+        timestamp: new Date().toISOString()
+      };
+    }
+
     if (!ctx.energy || !ctx.energy.available) {
       return {
         intent: "ENERGY",
@@ -161,6 +184,21 @@ export const copilotEngine = {
 
     if (ina219Valid !== true) {
       const v = Number(voltage) || 0;
+      if (ctx.energy && ctx.energy.mode === "ESTIMATED") {
+        return {
+          intent: "ELECTRICAL",
+          answer: `Validated electrical telemetry is currently unavailable because the INA219 is reporting an unverified voltage of ${v.toFixed(2)} V (exceeding the safety threshold for a 5 V motor). However, energy estimation is active using a nominal 5 V supply and observed average current of approximately 74 mA, giving an estimated power of 0.37 W.`,
+          evidence: [
+            { source: "LIVE TELEMETRY", metric: "Measured Voltage", value: v.toFixed(2), unit: "V", interpretation: "Unverified voltage readings." },
+            { source: "ENERGY ESTIMATOR", metric: "Nominal Voltage", value: "5.0", unit: "V", interpretation: "Using nominal motor supply for estimation." },
+            { source: "ENERGY ESTIMATOR", metric: "Observed Current", value: "74", unit: "mA", interpretation: "Observed average current draw." }
+          ],
+          recommendations: ["Perform independent multimeter verification on the motor supply.", "Ensure the INA219 sensor has a shared ground with the ESP32 and motor driver."],
+          confidence: "MEDIUM",
+          dataAvailability: "ESTIMATED",
+          timestamp: new Date().toISOString()
+        };
+      }
       if (v > 6.0) {
         return {
           intent: "ELECTRICAL",

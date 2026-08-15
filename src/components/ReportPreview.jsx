@@ -80,34 +80,68 @@ export default function ReportPreview({ report }) {
         <div className="report-section border-b">
           <h2>1. ENERGY & ELECTRICAL PERFORMANCE</h2>
           <div className="metrics-row-grid">
-            <ReportMetric
-              label="Integrated Energy Wh"
-              value={formatNum(energy.totalWh, 4)}
-              unit="Wh"
-              status={energy.status}
-              source="CALCULATED"
-            />
-            <ReportMetric
-              label="Average Active Power"
-              value={formatNum(energy.avgPowerMw ? energy.avgPowerMw / 1000 : null, 4)}
-              unit="W"
-              status={energy.status}
-              source="CALCULATED"
-            />
-            <ReportMetric
-              label="Power Stability Index"
-              value={energy.stability}
-              unit="%"
-              status={energy.stability !== null ? "AVAILABLE" : "NOT AVAILABLE"}
-              source="CALCULATED"
-            />
-            <ReportMetric
-              label="Valid Telemetry Coverage"
-              value={energy.coverage}
-              unit="%"
-              status="AVAILABLE"
-              source="MEASURED"
-            />
+            {energy.status === "ESTIMATED" ? (
+              <>
+                <ReportMetric
+                  label="Estimated Energy Wh"
+                  value={formatNum(energy.totalWh, 4)}
+                  unit="Wh"
+                  status="AVAILABLE"
+                  source="ESTIMATE"
+                />
+                <ReportMetric
+                  label="Estimated Active Power"
+                  value={formatNum(energy.avgPowerMw ? energy.avgPowerMw / 1000 : 0.37, 3)}
+                  unit="W"
+                  status="AVAILABLE"
+                  source="ESTIMATE"
+                />
+                <ReportMetric
+                  label="Power Stability Index"
+                  value="UNAVAILABLE"
+                  status="NOT AVAILABLE"
+                  source="ESTIMATE"
+                />
+                <ReportMetric
+                  label="Valid Telemetry Coverage"
+                  value="0"
+                  unit="%"
+                  status="AVAILABLE"
+                  source="MEASURED"
+                />
+              </>
+            ) : (
+              <>
+                <ReportMetric
+                  label="Integrated Energy Wh"
+                  value={formatNum(energy.totalWh, 4)}
+                  unit="Wh"
+                  status={energy.status}
+                  source="CALCULATED"
+                />
+                <ReportMetric
+                  label="Average Active Power"
+                  value={formatNum(energy.avgPowerMw ? energy.avgPowerMw / 1000 : null, 4)}
+                  unit="W"
+                  status={energy.status}
+                  source="CALCULATED"
+                />
+                <ReportMetric
+                  label="Power Stability Index"
+                  value={energy.stability}
+                  unit="%"
+                  status={energy.stability !== null ? "AVAILABLE" : "NOT AVAILABLE"}
+                  source="CALCULATED"
+                />
+                <ReportMetric
+                  label="Valid Telemetry Coverage"
+                  value={energy.coverage}
+                  unit="%"
+                  status="AVAILABLE"
+                  source="MEASURED"
+                />
+              </>
+            )}
           </div>
 
           <div className="metrics-table-wrapper mt-4">
