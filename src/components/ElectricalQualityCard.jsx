@@ -50,22 +50,48 @@ export default function ElectricalQualityCard({ quality, latestReading, estimati
             </span>
           </div>
 
-          <div className="info-col">
-            <span className="lbl">Quality Index</span>
-            <div className="badge-row">{getQualityBadge(state)}</div>
-          </div>
+          {estimationConfig?.enabled && validRecords === 0 ? (
+            <>
+              <div className="info-col">
+                <span className="lbl">Validated Voltage Telemetry</span>
+                <span className="val font-bold text-critical">UNAVAILABLE</span>
+              </div>
 
-          <div className="info-col">
-            <span className="lbl">Energy Estimation</span>
-            <span className="val font-semibold">{estimationConfig?.enabled ? "Enabled" : "Disabled"}</span>
-          </div>
+              <div className="info-col">
+                <span className="lbl">Current Telemetry</span>
+                <span className="val font-bold text-normal">AVAILABLE</span>
+              </div>
 
-          <div className="info-col">
-            <span className="lbl">Estimation Status</span>
-            <span className={`val font-bold ${estimationConfig?.enabled && validRecords === 0 ? "text-warning" : "text-neutral"}`}>
-              {estimationConfig?.enabled && validRecords === 0 ? "ESTIMATED" : "UNAVAILABLE"}
-            </span>
-          </div>
+              <div className="info-col">
+                <span className="lbl">Energy Calculation</span>
+                <span className="val font-bold text-warning">ESTIMATED</span>
+              </div>
+
+              <div className="info-col">
+                <span className="lbl">Data Source</span>
+                <span className="val font-semibold" style={{ fontSize: "11px", color: "#10b981" }}>REAL INA219 CURRENT</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="info-col">
+                <span className="lbl">Quality Index</span>
+                <div className="badge-row">{getQualityBadge(state)}</div>
+              </div>
+
+              <div className="info-col">
+                <span className="lbl">Energy Estimation</span>
+                <span className="val font-semibold">{estimationConfig?.enabled ? "Enabled" : "Disabled"}</span>
+              </div>
+
+              <div className="info-col">
+                <span className="lbl">Estimation Status</span>
+                <span className={`val font-bold ${estimationConfig?.enabled && validRecords === 0 ? "text-warning" : "text-neutral"}`}>
+                  {estimationConfig?.enabled && validRecords === 0 ? "ESTIMATED" : "UNAVAILABLE"}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

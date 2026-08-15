@@ -1,7 +1,13 @@
 import { Eye, Info } from "lucide-react";
 
 
-export default function EnergyInsightPanel({ insights = [], mode = "VALIDATED", runtimeMinutes = 10, energyWh = 0.0617 }) {
+export default function EnergyInsightPanel({
+  insights = [],
+  mode = "VALIDATED",
+  energyWh = 0.0617,
+  formattedDuration = "10m 00s",
+  latestCurrent = 74
+}) {
   return (
     <div className="panel energy-insight-panel">
       <div className="panel-header border-b">
@@ -26,20 +32,20 @@ export default function EnergyInsightPanel({ insights = [], mode = "VALIDATED", 
             <div className="insight-item-li" style={{ borderLeft: "3px solid #f59e0b", paddingLeft: "10px" }}>
               <Info size={14} className="text-warning flex-shrink-0 mt-0.5" style={{ color: "#f59e0b" }} />
               <span className="insight-text">
-                Estimated consumption is approximately <strong>{Number(energyWh).toFixed(4)} Wh</strong> for the configured {runtimeMinutes}-minute runtime.
+                Estimated consumption is approximately <strong>{Number(energyWh).toFixed(4)} Wh</strong> for the active {formattedDuration} telemetry runtime.
               </span>
             </div>
             
             <div style={{ backgroundColor: "#1e293b", padding: "12px", borderRadius: "6px", marginTop: "8px" }}>
               <strong style={{ fontSize: "11px", color: "#f59e0b", textTransform: "uppercase", display: "block", marginBottom: "4px" }}>
-                Why Estimated?
+                Why is this estimated?
               </strong>
               <p style={{ fontSize: "11px", color: "#94a3b8", lineHeight: "1.5", margin: 0 }}>
-                The INA219 is communicating correctly, but its measured bus voltage is currently inconsistent with the configured 5 V motor supply. Therefore EcoTwin does not treat the electrical telemetry as validated. For demonstration purposes, estimated power uses the nominal 5 V motor voltage and the observed average current of approximately 74 mA.
+                INA219 current telemetry is real and dynamically received from the EcoTwin edge device. The INA219 voltage reading is currently outside the configured 5 V motor supply expectation, so EcoTwin does not treat it as validated voltage. Estimated power therefore uses the nominal 5 V motor supply together with the real INA219 current.
               </p>
-              <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "6px", borderTop: "1px solid #334155", paddingTop: "6px" }}>
-                Formula: <strong>5 V &times; 0.074 A &approx; 0.37 W</strong><br />
-                For {runtimeMinutes} minutes: <strong>0.37 W &times; ({runtimeMinutes}/60) h &approx; {Number(energyWh).toFixed(4)} Wh</strong>
+              <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "8px", borderTop: "1px solid #334155", paddingTop: "8px" }}>
+                <div><strong>Estimated Power</strong> = 5.0 V &times; latest INA219 current ({latestCurrent !== null ? `${latestCurrent.toFixed(1)} mA` : "-- mA"}) &approx; <strong>{latestCurrent !== null ? `${(5.0 * latestCurrent / 1000).toFixed(3)} W` : "-- W"}</strong></div>
+                <div style={{ marginTop: "4px" }}><strong>Estimated Energy</strong> = time-integrated estimated power over active telemetry runtime ({formattedDuration}) &approx; <strong>{Number(energyWh).toFixed(4)} Wh</strong></div>
               </div>
             </div>
           </div>

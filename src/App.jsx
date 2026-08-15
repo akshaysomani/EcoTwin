@@ -15,7 +15,7 @@ import { alertService } from "./services/alertService";
 
 // Phase 7 Energy Engine Import
 import { energyEngine } from "./utils/energyEngine";
-import { ESTIMATION_CONFIG, calculateEstimatedEnergy } from "./utils/energyEstimate";
+import { ESTIMATION_CONFIG, calculateDynamicEstimatedEnergy } from "./utils/energyEstimate";
 
 // Phase 8 Maintenance Engine Import
 import { maintenanceEngine } from "./utils/maintenanceEngine";
@@ -222,11 +222,7 @@ function App() {
     const rawAssessment = energyEngine.calculateEnergyAssessment(slicedReadings);
 
     if (!rawAssessment.available && estimationConfig.enabled) {
-      const estimate = calculateEstimatedEnergy({
-        nominalVoltageV: estimationConfig.nominalVoltageV,
-        observedCurrentMa: estimationConfig.observedCurrentMa,
-        runtimeMinutes: estimationConfig.runtimeMinutes
-      });
+      const estimate = calculateDynamicEstimatedEnergy(slicedReadings, estimationConfig.nominalVoltageV);
 
       return {
         ...rawAssessment,
@@ -234,12 +230,15 @@ function App() {
         available: false,
         estimatedAvailable: true,
         avgVoltage: estimate.nominalVoltageV,
-        avgCurrent: estimate.observedCurrentMa,
-        avgPower: estimate.powerW,
-        maxPower: estimate.powerW,
-        energyWh: estimate.energyWh,
-        energyKwh: estimate.energyKwh,
-        runtimeMinutes: estimate.runtimeMinutes,
+        avgCurrent: estimate.avgCurrentMa !== null && estimate.avgCurrentMa !== undefined ? estimate.avgCurrentMa : null,
+        latestCurrent: estimate.latestCurrentMa !== null && estimate.latestCurrentMa !== undefined ? estimate.latestCurrentMa : null,
+        avgPower: estimate.currentPowerW,
+        maxPower: estimate.currentPowerW,
+        energyWh: estimate.cumulativeEnergyWh,
+        energyKwh: estimate.cumulativeEnergyKwh,
+        durationMs: estimate.durationMs,
+        formattedDuration: estimate.formattedDuration,
+        runtimeMinutes: estimate.durationMs ? Math.round(estimate.durationMs / 60000) : 0,
         trend: "STABLE",
         insights: [
           "Electrical telemetry is currently not validated. The displayed energy value is an engineering estimate based on nominal 5 V motor voltage and observed INA219 current."
@@ -353,8 +352,17 @@ function App() {
   }, [slicedReadings]);
 
   const energyChartPoints = useMemo(() => {
+    const isEstimated = energyAssessment.mode === "ESTIMATED";
+
     const validSorted = [...slicedReadings]
-      .filter((r) => r.ina219_voltage_valid === true && r.sensor_ina219_ok !== false)
+      .filter((r) => {
+        if (isEstimated) {
+          const cur = r.current_ma;
+          return cur !== null && cur !== undefined && !Number.isNaN(Number(cur)) && Number.isFinite(Number(cur));
+        } else {
+          return r.ina219_voltage_valid === true && r.sensor_ina219_ok !== false;
+        }
+      })
       .reverse();
 
     let currentWh = 0;
@@ -363,7 +371,9 @@ function App() {
 
     for (let i = 0; i < validSorted.length; i++) {
       const curr = validSorted[i];
-      const powerW = (Number(curr.power_mw) || 0) / 1000;
+      const powerW = isEstimated
+        ? 5.0 * (Math.max(0, Number(curr.current_ma)) / 1000)
+        : (Number(curr.power_mw) || 0) / 1000;
 
       if (i > 0) {
         const prev = validSorted[i - 1];
@@ -372,7 +382,9 @@ function App() {
         const deltaMs = currTime - prevTime;
         if (deltaMs > 0 && deltaMs < 3600000) {
           const deltaHours = deltaMs / 3600000;
-          const prevPowerW = (Number(prev.power_mw) || 0) / 1000;
+          const prevPowerW = isEstimated
+            ? 5.0 * (Math.max(0, Number(prev.current_ma)) / 1000)
+            : (Number(prev.power_mw) || 0) / 1000;
           const avgIntervalPowerW = (prevPowerW + powerW) / 2;
           currentWh += avgIntervalPowerW * deltaHours;
         }
@@ -390,7 +402,7 @@ function App() {
     }
 
     return points;
-  }, [slicedReadings, emissionFactorInput]);
+  }, [slicedReadings, emissionFactorInput, energyAssessment.mode]);
 
   const historicalRiskTrajectory = useMemo(() => {
     return [...slicedReadings]
@@ -899,63 +911,29 @@ function App() {
                       {estimationConfig.enabled && (
                         <>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span className="lbl" style={{ margin: 0 }}>Nominal Voltage:</span>
-                            <strong style={{ fontSize: '14px' }}>{estimationConfig.nominalVoltageV} V</strong>
+                            <span className="lbl" style={{ margin: 0 }}>Voltage Basis:</span>
+                            <strong style={{ fontSize: '14px', color: '#10b981' }}>{estimationConfig.nominalVoltageV.toFixed(1)} V (Nominal)</strong>
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span className="lbl" style={{ margin: 0 }}>Observed Current:</span>
-                            <strong style={{ fontSize: '14px' }}>{estimationConfig.observedCurrentMa} mA</strong>
+                            <span className="lbl" style={{ margin: 0 }}>Latest Telemetry Current:</span>
+                            <strong style={{ fontSize: '14px', color: '#3b82f6' }}>
+                              {energyAssessment.latestCurrent !== null ? `${energyAssessment.latestCurrent.toFixed(1)} mA` : "-- mA"}
+                            </strong>
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span className="lbl" style={{ margin: 0 }}>Runtime Horizon:</span>
-                            <div className="range-buttons" style={{ margin: 0 }}>
-                              <button
-                                className={estimationConfig.runtimeMinutes === 10 ? "active" : ""}
-                                style={{ padding: '4px 8px', fontSize: '11px' }}
-                                onClick={() => setEstimationConfig(prev => ({ ...prev, runtimeMinutes: 10 }))}
-                              >
-                                10 min
-                              </button>
-                              <button
-                                className={estimationConfig.runtimeMinutes === 30 ? "active" : ""}
-                                style={{ padding: '4px 8px', fontSize: '11px' }}
-                                onClick={() => setEstimationConfig(prev => ({ ...prev, runtimeMinutes: 30 }))}
-                              >
-                                30 min
-                              </button>
-                              <button
-                                className={estimationConfig.runtimeMinutes === 60 ? "active" : ""}
-                                style={{ padding: '4px 8px', fontSize: '11px' }}
-                                onClick={() => setEstimationConfig(prev => ({ ...prev, runtimeMinutes: 60 }))}
-                              >
-                                60 min
-                              </button>
-                            </div>
+                            <span className="lbl" style={{ margin: 0 }}>Avg Telemetry Current:</span>
+                            <strong style={{ fontSize: '14px', color: '#a855f7' }}>
+                              {energyAssessment.avgCurrent !== null ? `${energyAssessment.avgCurrent.toFixed(1)} mA` : "-- mA"}
+                            </strong>
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span className="lbl" style={{ margin: 0 }}>Custom Runtime:</span>
-                            <input
-                              type="number"
-                              min="1"
-                              value={estimationConfig.runtimeMinutes}
-                              onChange={(e) => {
-                                const val = parseInt(e.target.value) || 1;
-                                setEstimationConfig(prev => ({ ...prev, runtimeMinutes: val }));
-                              }}
-                              style={{
-                                width: '70px',
-                                padding: '4px 8px',
-                                backgroundColor: '#1e293b',
-                                border: '1px solid #475569',
-                                borderRadius: '4px',
-                                color: '#fff',
-                                fontSize: '12px'
-                              }}
-                            />
-                            <span style={{ fontSize: '11px', color: '#94a3b8' }}>min</span>
+                            <span className="lbl" style={{ margin: 0 }}>Active Runtime:</span>
+                            <strong style={{ fontSize: '14px', color: '#fff' }}>
+                              {energyAssessment.formattedDuration || "0s"}
+                            </strong>
                           </div>
                         </>
                       )}
@@ -971,6 +949,8 @@ function App() {
                   mode={energyAssessment.mode}
                   energyWh={energyAssessment.energyWh}
                   runtimeMinutes={energyAssessment.runtimeMinutes}
+                  formattedDuration={energyAssessment.formattedDuration}
+                  avgPower={energyAssessment.avgPower}
                 />
               </section>
 
@@ -980,6 +960,8 @@ function App() {
                   mode={energyAssessment.mode}
                   runtimeMinutes={energyAssessment.runtimeMinutes}
                   energyWh={energyAssessment.energyWh}
+                  formattedDuration={energyAssessment.formattedDuration}
+                  latestCurrent={energyAssessment.latestCurrent}
                 />
               </section>
 

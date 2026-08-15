@@ -90,12 +90,17 @@ export default function SustainabilityOverviewCard({ assessment }) {
           {energy.mode === "ESTIMATED" ? (
             <>
               <strong className="val text-neutral">UNAVAILABLE</strong>
-              <span className="source-tag calculated" style={{ backgroundColor: "#ef4444" }}>UNVERIFIED ESTIMATE</span>
+              <span className="source-tag calculated" style={{ backgroundColor: "#475569", color: "#fff", display: "inline-block", marginTop: "4px" }}>
+                {!dataQuality?.emissionFactorAvailable ? "EMISSION FACTOR NOT CONFIGURED" : "UNVERIFIED ELECTRICAL TELEMETRY"}
+              </span>
             </>
           ) : carbon.emissions !== null ? (
             <strong className="val text-critical">{formatNum(carbon.emissions, 6)} kgCO₂e</strong>
           ) : (
-            <strong className="val text-neutral">NOT CONFIGURED</strong>
+            <>
+              <strong className="val text-neutral">UNAVAILABLE</strong>
+              <span className="source-tag calculated" style={{ backgroundColor: "#ef4444", color: "#fff" }}>EMISSION FACTOR NOT CONFIGURED</span>
+            </>
           )}
           {energy.mode !== "ESTIMATED" && <span className="source-tag calculated">CALCULATED</span>}
         </div>

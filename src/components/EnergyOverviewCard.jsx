@@ -60,18 +60,18 @@ export default function EnergyOverviewCard({ assessment }) {
           </div>
 
           <div className="energy-item">
-            <span className="lbl">Observed Current</span>
-            <strong className="val">{formatNum(avgCurrent, 1)} mA</strong>
+            <span className="lbl">Latest Current</span>
+            <strong className="val">{formatNum(assessment.latestCurrent, 1)} mA</strong>
           </div>
 
           <div className="energy-item">
-            <span className="lbl">Nominal Voltage</span>
-            <strong className="val">{formatNum(avgVoltage, 2)} V</strong>
+            <span className="lbl">Voltage Basis</span>
+            <strong className="val">{formatNum(avgVoltage, 1)} V</strong>
           </div>
 
           <div className="energy-item">
-            <span className="lbl">Runtime Horizon</span>
-            <strong className="val">{assessment.runtimeMinutes || 10} min</strong>
+            <span className="lbl">Runtime</span>
+            <strong className="val">{assessment.formattedDuration || "0s"}</strong>
           </div>
 
           <div className="energy-item full-width highlight-item" style={{ borderLeftColor: '#f59e0b' }}>
@@ -81,12 +81,15 @@ export default function EnergyOverviewCard({ assessment }) {
           </div>
 
           <div className="energy-item full-width">
-            <span className="lbl">Data Source / Quality</span>
-            <span className="val font-semibold" style={{ fontSize: '12px', display: 'block', marginTop: '4px', color: '#94a3b8' }}>
-              Source: <strong>Engineering estimate</strong>
-            </span>
-            <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px', lineHeight: '1.4' }}>
-              Estimated from nominal 5 V motor supply and observed INA219 current (~74 mA). Supply voltage has not been independently verified.
+            <span className="lbl" style={{ marginBottom: '8px', display: 'block' }}>Data Source & Quality Parameters</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '11px', color: '#94a3b8' }}>
+              <div>Current source: <strong style={{ color: '#fff' }}>REAL INA219</strong></div>
+              <div>Voltage basis: <strong style={{ color: '#fff' }}>5 V NOMINAL</strong></div>
+              <div>Calculation: <strong style={{ color: '#fff' }}>DYNAMIC</strong></div>
+              <div>Verification: <strong style={{ color: '#ef4444' }}>NOT INDEPENDENTLY VERIFIED</strong></div>
+            </div>
+            <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '10px', lineHeight: '1.4', borderTop: '1px solid #334155', paddingTop: '8px' }}>
+              Estimated dynamically from real INA219 current telemetry using the nominal 5 V motor supply. Physical voltage readings (~9.9 V) are currently unverified.
             </p>
           </div>
         </div>

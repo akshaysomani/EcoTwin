@@ -11,8 +11,17 @@ import {
 } from "recharts";
 import { Activity } from "lucide-react";
 
-export default function EnergyTrendChart({ data = [], available = false, mode = "VALIDATED", energyWh = 0.0617, runtimeMinutes = 10 }) {
-  if (!available || data.length === 0) {
+export default function EnergyTrendChart({
+  data = [],
+  available = false,
+  mode = "VALIDATED",
+  energyWh = 0.0617,
+  formattedDuration = "0s",
+  avgPower = null
+}) {
+  const showChart = (available || mode === "ESTIMATED") && data.length > 0;
+
+  if (!showChart) {
     return (
       <div className="panel energy-trend-chart-panel border-dashed">
         <div className="panel-header border-b">
@@ -32,7 +41,9 @@ export default function EnergyTrendChart({ data = [], available = false, mode = 
               </span>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <span style={{ fontSize: '12px', color: '#94a3b8' }}>Estimated Power:</span>
-                <strong style={{ fontSize: '12px', color: '#fff' }}>0.37 W</strong>
+                <strong style={{ fontSize: '12px', color: '#fff' }}>
+                  {avgPower !== null && avgPower !== undefined ? `${Number(avgPower).toFixed(3)} W` : "UNAVAILABLE"}
+                </strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <span style={{ fontSize: '12px', color: '#94a3b8' }}>Estimated Energy:</span>
@@ -40,7 +51,7 @@ export default function EnergyTrendChart({ data = [], available = false, mode = 
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <span style={{ fontSize: '12px', color: '#94a3b8' }}>Runtime:</span>
-                <strong style={{ fontSize: '12px', color: '#fff' }}>{runtimeMinutes} min</strong>
+                <strong style={{ fontSize: '12px', color: '#fff' }}>{formattedDuration || "0s"}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '12px', color: '#94a3b8' }}>Status:</span>
@@ -58,15 +69,21 @@ export default function EnergyTrendChart({ data = [], available = false, mode = 
       <div className="panel-header border-b">
         <div>
           <h2>Energy Accumulation & Power Trends</h2>
-          <p>Chronological power loading vs. integrated Wh metrics</p>
+          {mode === "ESTIMATED" ? (
+            <p style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              ESTIMATED FROM REAL INA219 CURRENT
+            </p>
+          ) : (
+            <p>Chronological power loading vs. integrated Wh metrics</p>
+          )}
         </div>
       </div>
 
       <div className="chart-wrapper">
         <ResponsiveContainer width="100%" height={320}>
           <ComposedChart
-            data={data}
-            margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+             data={data}
+             margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
           >
             <defs>
               <linearGradient id="energyGrad" x1="0" y1="0" x2="0" y2="1">
@@ -131,7 +148,7 @@ export default function EnergyTrendChart({ data = [], available = false, mode = 
               yAxisId="right"
               type="monotone"
               dataKey="energyWh"
-              name="Energy Consumed (Wh)"
+              name={mode === "ESTIMATED" ? "Cumulative Estimated Energy (Wh)" : "Energy Consumed (Wh)"}
               stroke="#10b981"
               strokeWidth={1.5}
               fillOpacity={1}
@@ -142,7 +159,7 @@ export default function EnergyTrendChart({ data = [], available = false, mode = 
               yAxisId="left"
               type="monotone"
               dataKey="powerW"
-              name="Active Power (W)"
+              name={mode === "ESTIMATED" ? "Estimated Active Power (W)" : "Active Power (W)"}
               stroke="#3b82f6"
               strokeWidth={2}
               dot={false}
