@@ -15,19 +15,23 @@ export const sustainabilityEngine = {
     const validRecords = energyAssessment ? energyAssessment.quality.validRecords : 0;
     const coverage = energyAssessment ? energyAssessment.quality.coverage : 0;
 
+    const energyAvailable = energyAssessment 
+      ? (energyAssessment.available || energyAssessment.mode === "ESTIMATED")
+      : false;
+
     const dataQuality = {
       totalRecords,
       validRecords,
       coverage,
-      energyAvailable: energyAssessment ? energyAssessment.available : false,
+      energyAvailable,
       emissionFactorAvailable: emissionFactor !== null && emissionFactor !== undefined && !Number.isNaN(Number(emissionFactor)),
       state: energyAssessment ? energyAssessment.quality.state : "UNAVAILABLE"
     };
 
     // Calculate carbon emissions if energy is available and emission factor exists
     let carbonEmissions = null;
-    if (energyAssessment && energyAssessment.available && dataQuality.emissionFactorAvailable) {
-      carbonEmissions = energyAssessment.energyKwh * Number(emissionFactor);
+    if (energyAssessment && energyAvailable && dataQuality.emissionFactorAvailable) {
+      carbonEmissions = (Number(energyAssessment.energyKwh) || 0) * Number(emissionFactor);
     }
 
     // 2. Efficiency & Intensity Denominator check

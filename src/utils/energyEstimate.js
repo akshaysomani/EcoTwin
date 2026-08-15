@@ -9,6 +9,14 @@ export const ESTIMATION_CONFIG = {
   nominalVoltageV: 5.0
 };
 
+export const EMISSION_FACTOR_CONFIG = {
+  value: 0.716,
+  unit: "kgCO2e/kWh",
+  source: "Central Electricity Authority",
+  period: "FY 2022–23",
+  label: "CEA India Grid Average Emission Factor — FY 2022–23"
+};
+
 export function formatDuration(ms) {
   if (!ms || ms < 0) return "0s";
   const totalSecs = Math.floor(ms / 1000);

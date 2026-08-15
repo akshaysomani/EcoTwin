@@ -85,7 +85,7 @@ export default function CarbonImpactCard({ assessment, emissionFactorInput, onFa
                 type="number"
                 step="0.0001"
                 min="0"
-                placeholder="e.g. 0.385"
+                placeholder="e.g. 0.716"
                 value={emissionFactorInput}
                 onChange={handleFactorInputChange}
                 aria-label="Grid Emission Factor in kgCO2e/kWh"

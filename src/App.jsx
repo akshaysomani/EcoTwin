@@ -15,7 +15,7 @@ import { alertService } from "./services/alertService";
 
 // Phase 7 Energy Engine Import
 import { energyEngine } from "./utils/energyEngine";
-import { ESTIMATION_CONFIG, calculateDynamicEstimatedEnergy } from "./utils/energyEstimate";
+import { ESTIMATION_CONFIG, calculateDynamicEstimatedEnergy, EMISSION_FACTOR_CONFIG } from "./utils/energyEstimate";
 
 // Phase 8 Maintenance Engine Import
 import { maintenanceEngine } from "./utils/maintenanceEngine";
@@ -139,8 +139,8 @@ function App() {
   const [historyAlerts, setHistoryAlerts] = useState([]);
 
   // Phase 9 Configuration States
-  const [emissionFactorInput, setEmissionFactorInput] = useState("");
-  const [emissionSourceInput, setEmissionSourceInput] = useState("");
+  const [emissionFactorInput, setEmissionFactorInput] = useState(EMISSION_FACTOR_CONFIG.value.toString());
+  const [emissionSourceInput, setEmissionSourceInput] = useState(EMISSION_FACTOR_CONFIG.source);
 
   const loadReadings = useCallback(async () => {
     const { data, error: queryError } = await supabase

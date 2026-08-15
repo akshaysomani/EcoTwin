@@ -242,30 +242,61 @@ export default function ReportPreview({ report }) {
         <div className="report-section border-b">
           <h2>3. ESG & CARBON FOOTPRINT ANALYSIS</h2>
           <div className="metrics-row-grid">
-            <ReportMetric
-              label="Carbon Footprint Emissions"
-              value={formatNum(sustainability.emissionsKg, 6)}
-              unit="kgCO₂e"
-              status={sustainability.carbonStatus}
-              source="CALCULATED"
-            />
-            <ReportMetric
-              label="Grid Emission Factor"
-              value={formatNum(sustainability.emissionFactor, 4)}
-              unit="kgCO₂e/kWh"
-              status={sustainability.emissionFactor !== null ? "AVAILABLE" : "NOT CONFIGURED"}
-              source="CONFIGURED"
-            />
-            <ReportMetric
-              label="Energy Intensity"
-              status={sustainability.intensityStatus}
-              source="CALCULATED"
-            />
-            <ReportMetric
-              label="Baseline CO2 Savings"
-              status={sustainability.savingsStatus}
-              source="CALCULATED"
-            />
+            {energy.status === "ESTIMATED" ? (
+              <>
+                <ReportMetric
+                  label="Estimated Carbon Footprint"
+                  value={formatNum(sustainability.emissionsKg, 6)}
+                  unit="kgCO₂e"
+                  status={sustainability.emissionsKg !== null ? "AVAILABLE" : "NOT CONFIGURED"}
+                  source="ESTIMATE"
+                />
+                <ReportMetric
+                  label="Grid Emission Factor"
+                  value={formatNum(sustainability.emissionFactor, 4)}
+                  unit="kgCO₂e/kWh"
+                  status={sustainability.emissionFactor !== null ? "AVAILABLE" : "NOT CONFIGURED"}
+                  source="CONFIGURED"
+                />
+                <ReportMetric
+                  label="Energy Intensity"
+                  status="NOT AVAILABLE"
+                  source="ESTIMATE"
+                />
+                <ReportMetric
+                  label="Baseline CO2 Savings"
+                  status="NOT AVAILABLE"
+                  source="ESTIMATE"
+                />
+              </>
+            ) : (
+              <>
+                <ReportMetric
+                  label="Carbon Footprint Emissions"
+                  value={formatNum(sustainability.emissionsKg, 6)}
+                  unit="kgCO₂e"
+                  status={sustainability.carbonStatus}
+                  source="CALCULATED"
+                />
+                <ReportMetric
+                  label="Grid Emission Factor"
+                  value={formatNum(sustainability.emissionFactor, 4)}
+                  unit="kgCO₂e/kWh"
+                  status={sustainability.emissionFactor !== null ? "AVAILABLE" : "NOT CONFIGURED"}
+                  source="CONFIGURED"
+                />
+                <ReportMetric
+                  label="Energy Intensity"
+                  status={sustainability.intensityStatus}
+                  source="CALCULATED"
+                />
+                <ReportMetric
+                  label="Baseline CO2 Savings"
+                  status={sustainability.savingsStatus}
+                  source="CALCULATED"
+                />
+              </>
+            )}
           </div>
         </div>
 

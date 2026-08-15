@@ -78,7 +78,7 @@ export default function SustainabilityOverviewCard({ assessment }) {
           <strong className="val">{formatNum(energy.totalWh, 4)} Wh</strong>
           {energy.mode === "ESTIMATED" ? (
             <span className="source-tag calculated" style={{ backgroundColor: "#f59e0b", color: "#0f172a", fontWeight: "700" }}>
-              ESTIMATED — NOT FOR VERIFIED ESG REPORTING
+              ESTIMATED
             </span>
           ) : (
             <span className="source-tag calculated">CALCULATED FROM TELEMETRY</span>
@@ -88,21 +88,49 @@ export default function SustainabilityOverviewCard({ assessment }) {
         <div className="sustainability-item">
           <span className="lbl">Carbon Footprint</span>
           {energy.mode === "ESTIMATED" ? (
-            <>
-              <strong className="val text-neutral">UNAVAILABLE</strong>
-              <span className="source-tag calculated" style={{ backgroundColor: "#475569", color: "#fff", display: "inline-block", marginTop: "4px" }}>
-                {!dataQuality?.emissionFactorAvailable ? "EMISSION FACTOR NOT CONFIGURED" : "UNVERIFIED ELECTRICAL TELEMETRY"}
-              </span>
-            </>
+            dataQuality?.emissionFactorAvailable ? (
+              <>
+                <strong className="val text-critical">{formatNum(carbon.emissions, 6)} kgCO₂e</strong>
+                <span className="source-tag calculated" style={{ backgroundColor: "#f59e0b", color: "#0f172a", fontWeight: "700" }}>
+                  ESTIMATED
+                </span>
+              </>
+            ) : (
+              <>
+                <strong className="val text-neutral">UNAVAILABLE</strong>
+                <span className="source-tag calculated" style={{ backgroundColor: "#ef4444", color: "#fff" }}>
+                  EMISSION FACTOR NOT CONFIGURED
+                </span>
+              </>
+            )
           ) : carbon.emissions !== null ? (
-            <strong className="val text-critical">{formatNum(carbon.emissions, 6)} kgCO₂e</strong>
+            <>
+              <strong className="val text-critical">{formatNum(carbon.emissions, 6)} kgCO₂e</strong>
+              <span className="source-tag calculated">CALCULATED</span>
+            </>
           ) : (
             <>
               <strong className="val text-neutral">UNAVAILABLE</strong>
-              <span className="source-tag calculated" style={{ backgroundColor: "#ef4444", color: "#fff" }}>EMISSION FACTOR NOT CONFIGURED</span>
+              <span className="source-tag calculated" style={{ backgroundColor: "#ef4444", color: "#fff" }}>
+                {!dataQuality?.emissionFactorAvailable ? "EMISSION FACTOR NOT CONFIGURED" : "ENERGY TELEMETRY UNAVAILABLE"}
+              </span>
             </>
           )}
-          {energy.mode !== "ESTIMATED" && <span className="source-tag calculated">CALCULATED</span>}
+        </div>
+
+        <div className="sustainability-item">
+          <span className="lbl">Emission Factor</span>
+          <strong className="val">{carbon.emissionFactor !== null ? `${formatNum(carbon.emissionFactor, 3)}` : "0.716"} kgCO₂e/kWh</strong>
+          <span className="source-tag calculated">CONFIGURED</span>
+        </div>
+
+        <div className="sustainability-item">
+          <span className="lbl">Source & Period</span>
+          <div style={{ fontSize: "11px", color: "#94a3b8", lineHeight: "1.4", marginTop: "4px" }}>
+            <div>Source: <strong>{carbon.emissionSource || "Central Electricity Authority"}</strong></div>
+            <div>Period: <strong>FY 2022–23</strong></div>
+          </div>
+          <span className="source-tag measured">REFERENCE</span>
         </div>
 
         <div className="sustainability-item">
