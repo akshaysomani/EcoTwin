@@ -147,7 +147,11 @@ export const copilotEngine = {
       };
     }
 
-    const { totalWh, totalKwh, avgPower, trend, coverage } = ctx.energy;
+    const totalWh = ctx.energy.totalWh || 0;
+    const totalKwh = ctx.energy.totalKwh || 0;
+    const avgPower = ctx.energy.avgPower || 0;
+    const trend = ctx.energy.trend || "UNAVAILABLE";
+    const coverage = ctx.energy.coverage || 0;
     const answer = `Accumulated energy consumption is ${totalWh.toFixed(4)} Wh (${totalKwh.toFixed(6)} kWh) with an average power draw of ${(avgPower || 0).toFixed(1)} mW during the current window.`;
 
     const evidence = [

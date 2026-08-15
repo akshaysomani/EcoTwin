@@ -74,7 +74,7 @@ export const sustainabilityEngine = {
         severity: "WARNING",
         title: "Energy Mode: ESTIMATED",
         message: "Environmental metrics use estimated energy calculations. Not for verified ESG reporting.",
-        evidence: `Estimated draw: ${energyAssessment.energyWh.toFixed(4)} Wh`,
+        evidence: `Estimated draw: ${(energyAssessment.energyWh !== null && energyAssessment.energyWh !== undefined) ? energyAssessment.energyWh.toFixed(4) : "0.0000"} Wh`,
         source: "ESTIMATED"
       });
     } else if (energyAssessment && energyAssessment.available) {
@@ -82,7 +82,7 @@ export const sustainabilityEngine = {
         severity: "INFO",
         title: "Energy Telemetry Available",
         message: "Energy consumption data is available and active for the selected window.",
-        evidence: `Calculated draw: ${energyAssessment.energyWh.toFixed(4)} Wh`,
+        evidence: `Calculated draw: ${(energyAssessment.energyWh !== null && energyAssessment.energyWh !== undefined) ? energyAssessment.energyWh.toFixed(4) : "0.0000"} Wh`,
         source: "CALCULATED"
       });
       

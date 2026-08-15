@@ -631,7 +631,9 @@ function App() {
                 <div className="kpi-card">
                   <span className="lbl">{energyAssessment.mode === "ESTIMATED" ? "Estimated Power" : "Current Power"}</span>
                   <strong className="val">
-                    {energyAssessment.mode === "ESTIMATED" ? `${energyAssessment.avgPower.toFixed(2)} W` : currentPowerW}
+                    {energyAssessment.mode === "ESTIMATED"
+                      ? (energyAssessment.avgPower !== null && energyAssessment.avgPower !== undefined ? `${energyAssessment.avgPower.toFixed(2)} W` : "UNAVAILABLE")
+                      : currentPowerW}
                   </strong>
                   {energyAssessment.mode === "ESTIMATED" && (
                     <span className="trend-badge-pill trend-volatile" style={{ fontSize: '9px', display: 'inline-block', marginTop: '4px' }}>
@@ -642,7 +644,9 @@ function App() {
                 <div className="kpi-card">
                   <span className="lbl">{energyAssessment.mode === "ESTIMATED" ? "Estimated Energy" : "Energy"}</span>
                   <strong className="val">
-                    {energyAssessment.mode === "ESTIMATED" ? `${energyAssessment.energyWh.toFixed(4)} Wh` : accumulatedEnergy}
+                    {energyAssessment.mode === "ESTIMATED"
+                      ? (energyAssessment.energyWh !== null && energyAssessment.energyWh !== undefined ? `${energyAssessment.energyWh.toFixed(4)} Wh` : "0.0000 Wh")
+                      : accumulatedEnergy}
                   </strong>
                   {energyAssessment.mode === "ESTIMATED" && (
                     <span className="trend-badge-pill trend-volatile" style={{ fontSize: '9px', display: 'inline-block', marginTop: '4px' }}>
